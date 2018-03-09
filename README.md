@@ -1,35 +1,37 @@
-# electron-webpack-quick-start
-> A bare minimum project structure to get started developing with [`electron-webpack`](https://github.com/electron-userland/electron-webpack).
+# electron-print-server
+A simple HTTP printing server.
+Accepts commands via HTTP and prints documents that are loaded from provided URLs.
 
-Thanks to the power of `electron-webpack` this template comes packed with...
+Main purpose is to allow faster (compared to Google Cloud Print, for example)
+and simple (using just HTTP-requests) printing from any device in local network
 
-* Use of [`webpack-dev-server`](https://github.com/webpack/webpack-dev-server) for development
-* HMR for both `renderer` and `main` processes
-* Use of [`babel-preset-env`](https://github.com/babel/babel-preset-env) that is automatically configured based on your `electron` version
-* Use of [`electron-builder`](https://github.com/electron-userland/electron-builder) to package and build a distributable electron application
+> Build on [Electron](https://electronjs.org/) using [`electron-webpack`](https://github.com/electron-userland/electron-webpack).
+Uses Electron native [printing feature](https://electronjs.org/docs/api/web-contents#contentsprintoptions-callback)
 
-Make sure to check out [`electron-webpack`'s documentation](https://webpack.electron.build/) for more details.
+### Usage
 
-## Getting Started
-Simply clone down this reposity, install dependencies, and get started on your application.
+After launch the application will listen for HTTP-requests on 3000 port
 
-The use of the [yarn](https://yarnpkg.com/) package manager is **strongly** recommended, as opposed to using `npm`.
+`GET /printers` - get list of available printers.
+Returns JSON array of [`PrinterInfo`](https://electronjs.org/docs/api/structures/printer-info) objects
+
+`GET /print?url=<url>&printer=<printer>` - print URL on specified printer.
+Printer is identified by `name` field (see [`PrinterInfo`](https://electronjs.org/docs/api/structures/printer-info))
+
+### Development
+
+Setting up:
 
 ```bash
-# create a directory of your choice, and copy template using curl
-mkdir new-electron-webpack-project && cd new-electron-webpack-project
-curl -fsSL https://github.com/electron-userland/electron-webpack-quick-start/archive/master.tar.gz | tar -xz --strip-components 1
-
-# or copy template using git clone
-git clone https://github.com/electron-userland/electron-webpack-quick-start.git
-cd electron-webpack-quick-start
-rm -rf .git
+# clone repository
+git clone https://github.com/downace/electron-print-server.git
+cd electron-print-server
 
 # install dependencies
 yarn
 ```
 
-### Development Scripts
+Developing:
 
 ```bash
 # run application in development mode
@@ -44,3 +46,33 @@ yarn dist
 # `yarn compile` & create unpacked build with electron-builder
 yarn dist:dir
 ```
+
+### Road map
+
+Important:
+
+- [ ] Test with real printer (currently tested only on PDF output)
+- [ ] Test different paper sizes (e.g. with label printer)
+- [ ] Server control (currently application is still running after closing window)
+- [ ] Settings GUI (settings may appear after testing)
+
+Other:
+
+- [ ] Better server API (maybe JSON)
+- [ ] Error handling (including 4xx)
+- [ ] Tray icon (with server/printing status), window minimization
+- [ ] GUI for testing (better than current)
+
+Needs discussion:
+
+- [ ] Authentication
+- [ ] Using another HTTP-method for `/print` (POST? PUT?)
+
+Not important:
+
+- [ ] Web GUI (control server from any device in local network, not only local)
+- [ ] Refactoring and tests (not needed while app is dead simple and manual testing is easier)
+- [ ] Branding (application/package name, icons, etc.)
+- [ ] Normal versioning (instead of 0.0.0)
+- [ ] [Automatic updates](https://electronjs.org/docs/tutorial/updates)
+- [ ] Maybe better README

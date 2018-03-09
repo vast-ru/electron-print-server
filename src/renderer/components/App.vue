@@ -5,7 +5,6 @@
       <select v-model="printer">
         <option v-for="p in printers" :value="p.name">{{ p.name }}</option>
       </select>
-      <button @click="updatePrinters()">Обновить список принтеров</button>
     </p>
     <p>
       <button @click="print()" :disabled="!isPrinterSelected">Напечатать</button>
@@ -20,7 +19,7 @@
     export default {
         data() {
             return {
-                url: 'http://vast.ru',
+                url: 'https://vk.com/mr.marmok',
                 printResult: '',
                 printer: null,
                 printers: [],

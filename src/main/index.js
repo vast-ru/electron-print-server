@@ -1,8 +1,7 @@
-'use strict';
-
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import { format as formatUrl } from 'url';
+import express from 'express';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -65,18 +64,65 @@ app.on('ready', () => {
 });
 
 
-ipcMain.on('get-printers', e => {
-    e.sender.send('printers', e.sender.getPrinters());
+const expressApp = express();
+let webContents;
+
+expressApp.get('/printers', (req, res) => {
+    let result = [];
+    if (webContents) {
+        result = webContents.getPrinters();
+    }
+    res.json(result);
 });
 
-ipcMain.on('print', (e, { printer, url }) => {
-    const w = new BrowserWindow({
-       show: false,
-    });
-    w.loadURL(url);
-    w.webContents.on('did-finish-load', () => {
-        w.webContents.print({ silent: true, deviceName: printer }, (success) => {
-            e.sender.send('print-result', success);
-        });
+expressApp.get('/print', (req, res) => {
+    printUrl(req.query.url, req.query.printer).then(() => {
+        res.send('ok');
+    }, () => {
+        res.status(500).send('fail');
     });
 });
+
+expressApp.listen(3000, () => {
+    console.log('listening');
+});
+
+ipcMain.on('get-printers', ({ sender }) => {
+    webContents = sender;
+    webContents.send('printers', webContents.getPrinters());
+});
+
+ipcMain.on('print', ({ sender }, { printer, url }) => {
+    webContents = sender;
+    printUrl(url, printer).then(() => {
+        webContents.send('print-result', true);
+    }, () => {
+        webContents.send('print-result', false);
+    });
+});
+
+ipcMain.on('start-server', () => {
+
+});
+
+function printUrl(url, printer) {
+    if (!webContents) {
+        return Promise.reject('No web contents');
+    }
+    const w = new BrowserWindow({
+        show: false,
+    });
+    w.loadURL(url);
+
+    return new Promise((resolve, reject) => {
+        w.webContents.on('did-finish-load', () => {
+            w.webContents.print({ silent: true, deviceName: printer }, (success) => {
+                if (success) {
+                    resolve();
+                } else {
+                    reject();
+                }
+            });
+        });
+    });
+}
