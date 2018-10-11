@@ -2,6 +2,11 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import { format as formatUrl } from 'url';
 import express from 'express';
+import os from 'os';
+import debug from 'debug';
+import bodyParser from 'body-parser';
+
+const d = debug('electron-print-server');
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -60,39 +65,45 @@ app.on('activate', () => {
 
 // create main BrowserWindow when electron is ready
 app.on('ready', () => {
-    mainWindow = createMainWindow()
+    mainWindow = createMainWindow();
 });
 
-
+/**
+ * @type {Express}
+ */
 const expressApp = express();
+let appListener;
+/**
+ * @type Electron.WebContents
+ */
 let webContents;
 
+expressApp.use(function(req, res, next) {
+    res.set('Access-Control-Allow-Origin', '*');
+    next();
+});
+expressApp.use(bodyParser.urlencoded());
+
 expressApp.get('/printers', (req, res) => {
-    let result = [];
-    if (webContents) {
-        result = webContents.getPrinters();
-    }
-    res.json(result);
+    res.json(webContents ? webContents.getPrinters() : null);
 });
 
-expressApp.get('/print', (req, res) => {
-    printUrl(req.query.url, req.query.printer).then(() => {
-        res.send('ok');
-    }, () => {
-        res.status(500).send('fail');
+expressApp.post('/print', (req, res) => {
+    const jobs = req.body.jobs;
+    d('Printing %d jobs', jobs.length);
+    Promise.all(jobs.map(job => {
+        return printUrl(job.url, job.printer).then(() => true, () => false);
+    })).then(results => {
+        res.json(results);
     });
 });
 
-expressApp.listen(3000, () => {
-    console.log('listening');
+ipcMain.on('get-printers', e => {
+    webContents = e.sender;
+    e.returnValue = webContents.getPrinters();
 });
 
-ipcMain.on('get-printers', ({ sender }) => {
-    webContents = sender;
-    webContents.send('printers', webContents.getPrinters());
-});
-
-ipcMain.on('print', ({ sender }, { printer, url }) => {
+ipcMain.on('print', ({ sender }, { url, printer }) => {
     webContents = sender;
     printUrl(url, printer).then(() => {
         webContents.send('print-result', true);
@@ -101,14 +112,40 @@ ipcMain.on('print', ({ sender }, { printer, url }) => {
     });
 });
 
-ipcMain.on('start-server', () => {
+ipcMain.on('get-network-interfaces', e => {
+    webContents = e.sender;
+    e.returnValue = os.networkInterfaces();
+});
 
+ipcMain.on('start-server', ({ sender }, { hostname, port }) => {
+    d('Starting server...');
+    webContents = sender;
+    appListener = expressApp.listen(port, hostname, () => {
+        d('Server started on %o', appListener.address());
+        webContents.send('server-started', appListener.address());
+    });
+});
+
+ipcMain.on('stop-server', ({ sender }) => {
+    d('Stopping server...');
+    webContents = sender;
+    if (!appListener) {
+        d('Server is not started');
+        webContents.send('server-stopped');
+        return;
+    }
+    appListener.close(() => {
+        d('Server stopped');
+        webContents.send('server-stopped');
+        appListener = null;
+    });
 });
 
 function printUrl(url, printer) {
     if (!webContents) {
         return Promise.reject('No web contents');
     }
+    d('Printing URL %s on printer %s', url, printer);
     const w = new BrowserWindow({
         show: false,
     });
@@ -122,6 +159,7 @@ function printUrl(url, printer) {
                 } else {
                     reject();
                 }
+                w.close();
             });
         });
     });

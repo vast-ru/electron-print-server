@@ -1,51 +1,83 @@
 <template>
-  <div>
-    <p>
-      <input type="url" v-model="url"/>
-      <select v-model="printer">
-        <option v-for="p in printers" :value="p.name">{{ p.name }}</option>
-      </select>
-    </p>
-    <p>
-      <button @click="print()" :disabled="!isPrinterSelected">Напечатать</button>
-      {{ this.printResult }}
-    </p>
-  </div>
+    <div>
+        <div>
+            <h3>Настройки сервера</h3>
+            <select v-model="serverIp">
+                <option v-for="ip in availableIps" :value="ip">{{ ip }}</option>
+            </select>
+            <input type="text" v-model="serverPort" placeholder="3030"/>
+            <button @click="startServer()" :disabled="!serverIp">On</button>
+            <button @click="stopServer()" >Off</button>
+            <div>Статус: {{ serverStatus }}</div>
+        </div>
+
+        <div>
+            <h3>Проверка печати</h3>
+            <input type="text" v-model="urlToPrint">
+            <select v-model="printer">
+                <option v-for="p in availablePrinters" :value="p.name">{{ p.name }}</option>
+            </select>
+            <button @click="print()" :disabled="printer === null">Напечатать</button>
+            {{ printResult }}
+        </div>
+    </div>
 </template>
 
 <script>
     import { ipcRenderer } from 'electron';
+    import flatten from 'lodash/flatten';
 
     export default {
         data() {
             return {
-                url: 'https://vk.com/mr.marmok',
-                printResult: '',
-                printer: null,
-                printers: [],
+                availableIps     : [],
+                serverIp         : null,
+                serverPort       : 3030,
+                serverStatus     : '',
+
+                availablePrinters: [],
+                printer          : null,
+                urlToPrint       : 'https://vast.ru',
+                printResult      : '',
             };
         },
         created() {
+            this.initMainProcessListeners();
+            this.updateNetworkInterfaces();
             this.updatePrinters();
         },
-        computed: {
-            isPrinterSelected() {
-                return this.printer !== null;
-            }
+        destroyed() {
+            this.stopServer();
         },
         methods: {
             updatePrinters() {
-                ipcRenderer.send('get-printers');
-                ipcRenderer.on('printers', (e, printers) => {
-                    this.printers = printers;
+                this.availablePrinters = ipcRenderer.sendSync('get-printers');
+            },
+            initMainProcessListeners() {
+                ipcRenderer.on('server-started', (e, { address, port }) => {
+                    this.serverStatus = `Запущен на ${address}:${port}`;
+                });
+                ipcRenderer.on('server-stopped', e => {
+                    this.serverStatus = 'Остановлен';
                 });
             },
+            updateNetworkInterfaces() {
+                const interfaces = ipcRenderer.sendSync('get-network-interfaces');
+                this.availableIps = flatten(Object.values(interfaces))
+                    .filter(addr => addr.family === "IPv4" && !addr.internal)
+                    .map(addr => addr.address);
+            },
             print() {
-                this.printResult = '';
-                ipcRenderer.send('print', { printer: this.printer, url: this.url });
-                ipcRenderer.on('print-result', (e, result) => {
-                    this.printResult = result ? 'Успех' : 'Ошибка';
+                ipcRenderer.send('print', { printer: this.printer, url: this.urlToPrint });
+                ipcRenderer.once('print-result', (e, result) => {
+                    this.printResult = result ? 'ok' : 'fail';
                 });
+            },
+            startServer() {
+                ipcRenderer.send('start-server', { port: this.serverPort, hostname: this.serverIp });
+            },
+            stopServer() {
+                ipcRenderer.send('stop-server');
             },
         },
     };
