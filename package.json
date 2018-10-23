@@ -10,7 +10,8 @@
   },
   "build": {
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "extraResources": "./external/SumatraPDFx64.exe"
     },
     "linux": {
       "target": "tar.gz"
@@ -29,6 +30,7 @@
     "electron-webpack-vue": "2.1.2",
     "express": "4.16.2",
     "lodash": "^4.17.11",
+    "tmp": "^0.0.33",
     "vue": "2.5.17",
     "vue-template-compiler": "2.5.17",
     "webpack": "4.16.5",

@@ -1,10 +1,13 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
-import * as path from 'path';
-import { format as formatUrl } from 'url';
-import express from 'express';
-import os from 'os';
-import debug from 'debug';
 import bodyParser from 'body-parser';
+import childProcess from 'child_process';
+import debug from 'debug';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import express from 'express';
+import fs from 'fs';
+import os from 'os';
+import * as path from 'path';
+import tmp from 'tmp';
+import { format as formatUrl } from 'url';
 
 const d = debug('electron-print-server');
 
@@ -15,7 +18,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 let mainWindow;
 
 function createMainWindow() {
-    const win = new BrowserWindow();
+    const win = new BrowserWindow({ show: false });
 
     if (isDevelopment) {
         win.webContents.openDevTools();
@@ -43,6 +46,10 @@ function createMainWindow() {
         });
     });
 
+    win.once('ready-to-show', () => {
+        win.show();
+    });
+
     return win;
 }
 
@@ -52,6 +59,13 @@ app.on('window-all-closed', () => {
     // explicitly quits
     if (process.platform !== 'darwin') {
         app.quit();
+
+        if (appListener) {
+            appListener.close(() => {
+                d('Server stopped');
+                appListener = null;
+            });
+        }
     }
 });
 
@@ -106,9 +120,9 @@ ipcMain.on('get-printers', e => {
 ipcMain.on('print', ({ sender }, { url, printer }) => {
     webContents = sender;
     printUrl(url, printer).then(() => {
-        webContents.send('print-result', true);
-    }, () => {
-        webContents.send('print-result', false);
+        webContents.send('print-result', { success: true });
+    }, error => {
+        webContents.send('print-result', { success: false, error });
     });
 });
 
@@ -143,24 +157,72 @@ ipcMain.on('stop-server', ({ sender }) => {
 
 function printUrl(url, printer) {
     if (!webContents) {
-        return Promise.reject('No web contents');
+        return Promise.reject(new Error('No web contents'));
     }
     d('Printing URL %s on printer %s', url, printer);
     const w = new BrowserWindow({
         show: false,
     });
-    w.loadURL(url);
+    w.loadURL(url, { userAgent: 'ElectronPrintServer / 0.0.1' });
 
     return new Promise((resolve, reject) => {
-        w.webContents.on('did-finish-load', () => {
-            w.webContents.print({ silent: true, deviceName: printer }, (success) => {
-                if (success) {
-                    resolve();
-                } else {
-                    reject();
-                }
+        w.webContents.once('did-finish-load', () => {
+            w.webContents.printToPDF({}, (err, data) => {
                 w.close();
+                if (err) {
+                    d('Print to PDF error: %s', err.message);
+                    reject(err);
+                    return;
+                }
+                const fileName = tmp.fileSync({
+                    prefix: 'print_',
+                    postfix: '.pdf',
+                }).name;
+                fs.writeFile(fileName, data, err => {
+                    if (err) {
+                        d('PDF write error: %s', err.message);
+                        reject(err);
+                        return;
+                    }
+                    printFile(fileName, printer).then(out => {
+                        d('Print output: %s', out);
+                        resolve(out);
+                    }, err => {
+                        d('Print error: %s', err.message);
+                        reject(err);
+                    });
+                })
             });
         });
     });
+}
+
+function printFile(fileName, printer) {
+    return new Promise((resolve, reject) => {
+        let command;
+        switch (process.platform) {
+            case 'linux':
+                command = `lp -d "${printer}" "${fileName}"`;
+                break;
+            case 'win32':
+                command = `${extraResourcePath('SumatraPDFx64.exe')} -print-to "${printer}" -silent "${fileName}"`;
+                break;
+            default:
+                d('Unsupported platform: %s', process.platform);
+                reject(new Error(`Platform "${process.platform}" is not supported`));
+                return;
+        }
+        childProcess.exec(command, {}, (err, stdout) => {
+            if (err) {
+                d('Shell exec error: %s', err.message);
+                reject(err);
+                return;
+            }
+            resolve(stdout);
+        });
+    });
+}
+
+function extraResourcePath(p) {
+    return path.join(__dirname, '..', 'external', p);
 }

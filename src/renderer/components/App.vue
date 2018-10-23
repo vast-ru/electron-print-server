@@ -69,8 +69,8 @@
             },
             print() {
                 ipcRenderer.send('print', { printer: this.printer, url: this.urlToPrint });
-                ipcRenderer.once('print-result', (e, result) => {
-                    this.printResult = result ? 'ok' : 'fail';
+                ipcRenderer.once('print-result', (e, { success, error }) => {
+                    this.printResult = success ? 'ok' : 'fail: ' + JSON.stringify(error);
                 });
             },
             startServer() {
