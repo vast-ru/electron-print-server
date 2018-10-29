@@ -27,15 +27,16 @@
 </template>
 
 <script>
-    import { ipcRenderer, clipboard } from 'electron';
+    import { clipboard, ipcRenderer } from 'electron';
+    import settings from 'electron-settings';
     import flatten from 'lodash/flatten';
 
     export default {
         data() {
             return {
                 availableIps     : [],
-                serverIp         : null,
-                serverPort       : 3030,
+                serverIp         : settings.get('server.ip', null),
+                serverPort       : settings.get('server.port', 3030),
                 serverStatus     : 'unknown',
 
                 availablePrinters: [],
@@ -66,6 +67,14 @@
             },
             serverAddress() {
                 return `${this.serverIp}:${this.serverPort}`;
+            },
+        },
+        watch: {
+            serverIp(ip) {
+                settings.set('server.ip', ip);
+            },
+            serverPort(port) {
+                settings.set('server.port', port);
             },
         },
         methods: {

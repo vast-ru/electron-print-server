@@ -1,6 +1,8 @@
 {
-  "name": "electron-webpack-quick-start",
-  "version": "0.0.0",
+  "name": "electron-print-server",
+  "description": "Print server for printing URLs on local printers",
+  "author": "jbot <monstion@gmail.com>",
+  "version": "0.1.0",
   "license": "MIT",
   "scripts": {
     "dev": "electron-webpack dev",
@@ -9,12 +11,14 @@
     "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null"
   },
   "build": {
+    "productName": "Electron print server",
     "win": {
-      "target": "portable",
+      "target": [ "portable", "nsis" ],
       "extraResources": "./external/SumatraPDFx64.exe"
     },
     "linux": {
-      "target": "tar.gz"
+      "target": [ "tar.gz", "deb" ],
+      "category": "Printing"
     }
   },
   "dependencies": {
@@ -26,6 +30,7 @@
     "debug": "^4.0.1",
     "electron": "2.0.7",
     "electron-builder": "20.28.1",
+    "electron-settings": "^3.2.0",
     "electron-webpack": "2.1.2",
     "electron-webpack-vue": "2.1.2",
     "express": "4.16.2",
