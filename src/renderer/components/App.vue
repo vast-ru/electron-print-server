@@ -2,13 +2,16 @@
     <div>
         <div>
             <h3>Настройки сервера</h3>
-            <select v-model="serverIp">
+            <select v-model="serverIp" :disabled="serverStatus === 'running'">
                 <option v-for="ip in availableIps" :value="ip">{{ ip }}</option>
             </select>
             <input type="text" v-model="serverPort" placeholder="3030"/>
             <button @click="startServer()" :disabled="!serverIp">On</button>
             <button @click="stopServer()" >Off</button>
-            <div>Статус: {{ serverStatus }}</div>
+            <div>
+                Статус: {{ serverStatusText }}
+                <button v-if="serverStatus === 'running'" @click="copyAddress()">Скопировать адрес</button>
+            </div>
         </div>
 
         <div>
@@ -24,7 +27,7 @@
 </template>
 
 <script>
-    import { ipcRenderer } from 'electron';
+    import { ipcRenderer, clipboard } from 'electron';
     import flatten from 'lodash/flatten';
 
     export default {
@@ -33,7 +36,7 @@
                 availableIps     : [],
                 serverIp         : null,
                 serverPort       : 3030,
-                serverStatus     : '',
+                serverStatus     : 'unknown',
 
                 availablePrinters: [],
                 printer          : null,
@@ -49,16 +52,32 @@
         destroyed() {
             this.stopServer();
         },
+        computed: {
+            serverStatusText() {
+                switch (this.serverStatus) {
+                    case 'running':
+                        return `Запущен на ${this.serverAddress}`;
+                    case 'stopped':
+                        return 'Остановлен';
+                    case 'unknown':
+                    default:
+                        return 'Неизвестен';
+                }
+            },
+            serverAddress() {
+                return `${this.serverIp}:${this.serverPort}`;
+            },
+        },
         methods: {
             updatePrinters() {
                 this.availablePrinters = ipcRenderer.sendSync('get-printers');
             },
             initMainProcessListeners() {
-                ipcRenderer.on('server-started', (e, { address, port }) => {
-                    this.serverStatus = `Запущен на ${address}:${port}`;
+                ipcRenderer.on('server-started', e => {
+                    this.serverStatus = 'running';
                 });
                 ipcRenderer.on('server-stopped', e => {
-                    this.serverStatus = 'Остановлен';
+                    this.serverStatus = 'stopped';
                 });
             },
             updateNetworkInterfaces() {
@@ -78,6 +97,9 @@
             },
             stopServer() {
                 ipcRenderer.send('stop-server');
+            },
+            copyAddress() {
+                clipboard.writeText(this.serverAddress);
             },
         },
     };
