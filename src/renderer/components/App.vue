@@ -2,15 +2,21 @@
     <div>
         <div>
             <h3>Настройки сервера</h3>
-            <select v-model="serverIp" :disabled="serverStatus === 'running'">
+            <select v-model="serverIp" :disabled="serverState === 'running'">
                 <option v-for="ip in availableIps" :value="ip">{{ ip }}</option>
             </select>
             <input type="text" v-model="serverPort" placeholder="3030"/>
             <button @click="startServer()" :disabled="!serverIp">On</button>
             <button @click="stopServer()" >Off</button>
             <div>
-                Статус: {{ serverStatusText }}
-                <button v-if="serverStatus === 'running'" @click="copyAddress()">Скопировать адрес</button>
+                Статус: {{ serverStateText }}
+                <button v-if="serverState === 'running'" @click="copyAddress()">Скопировать адрес</button>
+            </div>
+            <div>
+                <label>
+                    <input type="checkbox" v-model="serverAutostart"/>
+                    Автозапуск сервера при старте приложения
+                </label>
             </div>
         </div>
 
@@ -34,10 +40,11 @@
     export default {
         data() {
             return {
-                availableIps     : [],
-                serverIp         : settings.get('server.ip', null),
-                serverPort       : settings.get('server.port', 3030),
-                serverStatus     : 'unknown',
+                availableIps   : [],
+                serverIp       : settings.get('server.ip', null),
+                serverPort     : settings.get('server.port', 3030),
+                serverState    : '',
+                serverAutostart: settings.get('server.autostart', false),
 
                 availablePrinters: [],
                 printer          : null,
@@ -49,18 +56,18 @@
             this.initMainProcessListeners();
             this.updateNetworkInterfaces();
             this.updatePrinters();
+            this.updateServerState();
         },
         destroyed() {
             this.stopServer();
         },
         computed: {
-            serverStatusText() {
-                switch (this.serverStatus) {
+            serverStateText() {
+                switch (this.serverState) {
                     case 'running':
                         return `Запущен на ${this.serverAddress}`;
                     case 'stopped':
                         return 'Остановлен';
-                    case 'unknown':
                     default:
                         return 'Неизвестен';
                 }
@@ -76,17 +83,17 @@
             serverPort(port) {
                 settings.set('server.port', port);
             },
+            serverAutostart(autostart) {
+                settings.set('server.autostart', autostart);
+            },
         },
         methods: {
             updatePrinters() {
                 this.availablePrinters = ipcRenderer.sendSync('get-printers');
             },
             initMainProcessListeners() {
-                ipcRenderer.on('server-started', e => {
-                    this.serverStatus = 'running';
-                });
-                ipcRenderer.on('server-stopped', e => {
-                    this.serverStatus = 'stopped';
+                ipcRenderer.on('server-state', (e, state) => {
+                    this.serverState = state;
                 });
             },
             updateNetworkInterfaces() {
@@ -94,6 +101,9 @@
                 this.availableIps = flatten(Object.values(interfaces))
                     .filter(addr => addr.family === "IPv4" && !addr.internal)
                     .map(addr => addr.address);
+            },
+            updateServerState() {
+                ipcRenderer.send('get-server-state');
             },
             print() {
                 ipcRenderer.send('print', { printer: this.printer, url: this.urlToPrint });

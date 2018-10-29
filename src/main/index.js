@@ -1,7 +1,8 @@
 import bodyParser from 'body-parser';
 import childProcess from 'child_process';
 import debug from 'debug';
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, Tray } from 'electron';
+import settings from 'electron-settings';
 import express from 'express';
 import fs from 'fs';
 import os from 'os';
@@ -15,7 +16,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // global reference to mainWindow (necessary to prevent window from being
 // garbage collected)
-let mainWindow;
+let mainWindow, tray;
 
 function createMainWindow() {
     const win = new BrowserWindow({ show: false });
@@ -26,8 +27,7 @@ function createMainWindow() {
 
     if (isDevelopment) {
         win.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`);
-    }
-    else {
+    } else {
         win.loadURL(formatUrl({
             pathname: path.join(__dirname, 'index.html'),
             protocol: 'file',
@@ -53,21 +53,46 @@ function createMainWindow() {
     return win;
 }
 
-// quit application when all windows are closed
-app.on('window-all-closed', () => {
-    // on macOS it is common for applications to stay open until the user
-    // explicitly quits
-    if (process.platform !== 'darwin') {
-        app.quit();
+function createTray() {
+    const t = new Tray(trayIconPath());
 
-        if (appListener) {
-            appListener.close(() => {
-                d('Server stopped');
-                appListener = null;
-            });
-        }
+    const menu = Menu.buildFromTemplate([
+        {
+            type : "normal",
+            label: 'Показать/Скрыть',
+            click: toggleMainWindow,
+        },
+        {
+            type: "separator",
+        },
+        {
+            type : "normal",
+            label: 'Выход',
+            click: quit,
+        },
+    ]);
+
+    t.on('click', toggleMainWindow);
+
+    t.setToolTip('Сервер печати');
+    t.setContextMenu(menu);
+
+    return t;
+}
+
+function toggleMainWindow() {
+    if (mainWindow) {
+        // TODO: Hide instead?
+        // TODO: Recreating is slow, but it's a rare case.
+        mainWindow.close();
+        mainWindow = null;
+    } else {
+        mainWindow = createMainWindow();
     }
-});
+}
+
+// Override default behavior: we don't want to quit when window is closed.
+app.on('window-all-closed', () => {});
 
 app.on('activate', () => {
     // on macOS it is common to re-create a window even after all windows have
@@ -79,7 +104,21 @@ app.on('activate', () => {
 
 // create main BrowserWindow when electron is ready
 app.on('ready', () => {
-    mainWindow = createMainWindow();
+    const shouldShowWindow = !process.argv.includes('--silent');
+
+    if (shouldShowWindow) {
+        mainWindow = createMainWindow();
+    }
+
+    tray = createTray();
+
+    if (settings.get('server.autostart')) {
+        const address = settings.get('server.ip');
+        const port = settings.get('server.port');
+        if (address && port) {
+            startServer(address, port);
+        }
+    }
 });
 
 /**
@@ -132,11 +171,9 @@ ipcMain.on('get-network-interfaces', e => {
 });
 
 ipcMain.on('start-server', ({ sender }, { hostname, port }) => {
-    d('Starting server...');
     webContents = sender;
-    appListener = expressApp.listen(port, hostname, () => {
-        d('Server started on %o', appListener.address());
-        webContents.send('server-started', appListener.address());
+    startServer(hostname, port).then(() => {
+        webContents.send('server-state', 'running');
     });
 });
 
@@ -145,15 +182,38 @@ ipcMain.on('stop-server', ({ sender }) => {
     webContents = sender;
     if (!appListener) {
         d('Server is not started');
-        webContents.send('server-stopped');
+        webContents.send('server-state', 'stopped');
+        tray.setToolTip('Сервер печати - Остановлен');
         return;
     }
     appListener.close(() => {
         d('Server stopped');
-        webContents.send('server-stopped');
+        webContents.send('server-state', 'stopped');
+        tray.setToolTip('Сервер печати - Остановлен');
         appListener = null;
     });
 });
+
+ipcMain.on('get-server-state', e => {
+    webContents = e.sender;
+    if (appListener) {
+        webContents.send('server-state', 'running');
+    } else {
+        webContents.send('server-state', 'stopped');
+    }
+});
+
+function startServer(hostname, port) {
+    d('Starting server...');
+    return new Promise(resolve => {
+        appListener = expressApp.listen(port, hostname, () => {
+            const addr = appListener.address();
+            d('Server started on %o', addr);
+            tray.setToolTip(`Сервер печати - Запущен на ${addr.address}:${addr.port}`);
+            resolve();
+        });
+    });
+}
 
 function printUrl(url, printer) {
     if (!webContents) {
@@ -200,6 +260,8 @@ function printUrl(url, printer) {
 function printFile(fileName, printer) {
     return new Promise((resolve, reject) => {
         let command;
+        // Not supporting other platforms
+        // noinspection SwitchStatementWithNoDefaultBranchJS
         switch (process.platform) {
             case 'linux':
                 command = `lp -d "${printer}" "${fileName}"`;
@@ -207,10 +269,6 @@ function printFile(fileName, printer) {
             case 'win32':
                 command = `${extraResourcePath('SumatraPDFx64.exe')} -print-to "${printer}" -silent "${fileName}"`;
                 break;
-            default:
-                d('Unsupported platform: %s', process.platform);
-                reject(new Error(`Platform "${process.platform}" is not supported`));
-                return;
         }
         childProcess.exec(command, {}, (err, stdout) => {
             if (err) {
@@ -225,4 +283,26 @@ function printFile(fileName, printer) {
 
 function extraResourcePath(p) {
     return path.join(__dirname, '..', 'external', p);
+}
+
+function trayIconPath() {
+    switch (process.platform) {
+        case 'linux':
+            return path.join(__static, '/icons/linux/tray-icon.png');
+        case 'win32':
+            return path.join(__static, '/icons/win32/tray-icon.ico');
+        default:
+            return null;
+    }
+}
+
+function quit() {
+    if (appListener) {
+        appListener.close(() => {
+            app.quit();
+        });
+    } else {
+        app.quit();
+    }
+
 }
