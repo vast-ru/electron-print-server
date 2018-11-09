@@ -5,6 +5,7 @@ import { app, BrowserWindow, ipcMain, Menu, Tray } from 'electron';
 import settings from 'electron-settings';
 import express from 'express';
 import fs from 'fs';
+import https from 'https';
 import os from 'os';
 import * as path from 'path';
 import tmp from 'tmp';
@@ -116,7 +117,11 @@ app.on('ready', () => {
         const address = settings.get('server.ip');
         const port = settings.get('server.port');
         if (address && port) {
-            startServer(address, port);
+            startServer(address, port, {
+                useHttps: settings.get('server.https.enabled', false),
+                httpsCert: settings.get('server.https.cert', ''),
+                httpsCertKey: settings.get('server.https.certKey', ''),
+            });
         }
     }
 });
@@ -126,6 +131,10 @@ app.on('ready', () => {
  */
 const expressApp = express();
 let appListener;
+/**
+ * @type {Set<Socket>}
+ */
+const sockets = new Set();
 /**
  * @type Electron.WebContents
  */
@@ -170,9 +179,9 @@ ipcMain.on('get-network-interfaces', e => {
     e.returnValue = os.networkInterfaces();
 });
 
-ipcMain.on('start-server', ({ sender }, { hostname, port }) => {
+ipcMain.on('start-server', ({ sender }, { hostname, port, httpsSettings }) => {
     webContents = sender;
-    startServer(hostname, port).then(() => {
+    startServer(hostname, port, httpsSettings).then(() => {
         webContents.send('server-state', 'running');
     });
 });
@@ -186,6 +195,9 @@ ipcMain.on('stop-server', ({ sender }) => {
         tray.setToolTip('Сервер печати - Остановлен');
         return;
     }
+    sockets.forEach(socket => {
+        socket.destroy();
+    });
     appListener.close(() => {
         d('Server stopped');
         webContents.send('server-state', 'stopped');
@@ -203,15 +215,33 @@ ipcMain.on('get-server-state', e => {
     }
 });
 
-function startServer(hostname, port) {
-    d('Starting server...');
+function startServer(hostname, port, { useHttps, httpsCert, httpsCertKey }) {
+    d('Starting server... (use HTTPS: %j)', useHttps);
     return new Promise(resolve => {
-        appListener = expressApp.listen(port, hostname, () => {
+        if (useHttps) {
+            appListener = https.createServer({
+                cert: httpsCert,
+                key : httpsCertKey,
+            }, expressApp).listen(port, hostname, listenHandler);
+        } else {
+            appListener = expressApp.listen(port, hostname, listenHandler);
+        }
+
+        appListener.on('connection', socket => {
+            sockets.add(socket);
+            d("New connection; total length = %d", sockets.size);
+            socket.on('close', () => {
+                sockets.delete(socket);
+                d("Connection closed; total length = %d", sockets.size);
+            })
+        });
+
+        function listenHandler() {
             const addr = appListener.address();
             d('Server started on %o', addr);
             tray.setToolTip(`Сервер печати - Запущен на ${addr.address}:${addr.port}`);
             resolve();
-        });
+        }
     });
 }
 
@@ -282,7 +312,11 @@ function printFile(fileName, printer) {
 }
 
 function extraResourcePath(p) {
-    return path.join(__dirname, '..', 'external', p);
+    if (isDevelopment) {
+        return path.resolve(__dirname, '../../external', p);
+    } else {
+        return path.join(process.resourcesPath, 'external', p);
+    }
 }
 
 function trayIconPath() {
@@ -298,6 +332,9 @@ function trayIconPath() {
 
 function quit() {
     if (appListener) {
+        sockets.forEach(socket => {
+            socket.destroy();
+        });
         appListener.close(() => {
             app.quit();
         });

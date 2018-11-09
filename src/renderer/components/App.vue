@@ -6,8 +6,21 @@
                 <option v-for="ip in availableIps" :value="ip">{{ ip }}</option>
             </select>
             <input type="text" v-model="serverPort" placeholder="3030"/>
-            <button @click="startServer()" :disabled="!serverIp">On</button>
-            <button @click="stopServer()" >Off</button>
+            <label title="Использовать защищенное соединение">
+                <input type="checkbox"
+                    v-model="serverHttps"
+                    :disabled="serverState === 'running'"
+                />
+                HTTPS
+            </label>
+            <button
+                @click="startServer()"
+                :disabled="serverState === 'running' || !serverIp || (serverHttps && (!httpsCert || !httpsCertKey))"
+            >On</button>
+            <button
+                @click="stopServer()"
+                :disabled="serverState !== 'running'"
+            >Off</button>
             <div>
                 Статус: {{ serverStateText }}
                 <button v-if="serverState === 'running'" @click="copyAddress()">Скопировать адрес</button>
@@ -29,6 +42,24 @@
             <button @click="print()" :disabled="printer === null">Напечатать</button>
             {{ printResult }}
         </div>
+
+        <div v-if="serverHttps">
+            <h3>HTTPS</h3>
+            <p>
+                Сертификат (файл .crt)<br/>
+                <textarea rows="4" cols="64"
+                    v-model="httpsCert"
+                    placeholder="Вставьте содержимое файла .crt"
+                ></textarea>
+            </p>
+            <p>
+                Ключ сертификата (файл .key)<br/>
+                <textarea rows="4" cols="64"
+                    v-model="httpsCertKey"
+                    placeholder="Вставьте содержимое файла .key"
+                ></textarea>
+            </p>
+        </div>
     </div>
 </template>
 
@@ -43,6 +74,9 @@
                 availableIps   : [],
                 serverIp       : settings.get('server.ip', null),
                 serverPort     : settings.get('server.port', 3030),
+                serverHttps    : settings.get('server.https.enabled', false),
+                httpsCert      : settings.get('server.https.cert', ''),
+                httpsCertKey   : settings.get('server.https.certKey', ''),
                 serverState    : '',
                 serverAutostart: settings.get('server.autostart', false),
 
@@ -83,6 +117,15 @@
             serverPort(port) {
                 settings.set('server.port', port);
             },
+            serverHttps(useHttps) {
+                settings.set('server.https.enabled', useHttps);
+            },
+            httpsCert(cert) {
+                settings.set('server.https.cert', cert);
+            },
+            httpsCertKey(key) {
+                settings.set('server.https.certKey', key);
+            },
             serverAutostart(autostart) {
                 settings.set('server.autostart', autostart);
             },
@@ -100,7 +143,8 @@
                 const interfaces = ipcRenderer.sendSync('get-network-interfaces');
                 this.availableIps = flatten(Object.values(interfaces))
                     .filter(addr => addr.family === "IPv4" && !addr.internal)
-                    .map(addr => addr.address);
+                    .map(addr => addr.address)
+                    .concat('localhost');
             },
             updateServerState() {
                 ipcRenderer.send('get-server-state');
@@ -112,7 +156,15 @@
                 });
             },
             startServer() {
-                ipcRenderer.send('start-server', { port: this.serverPort, hostname: this.serverIp });
+                ipcRenderer.send('start-server', {
+                    port        : this.serverPort,
+                    hostname    : this.serverIp,
+                    httpsSettings: {
+                        useHttps    : this.serverHttps,
+                        httpsCert   : this.httpsCert,
+                        httpsCertKey: this.httpsCertKey,
+                    },
+                });
             },
             stopServer() {
                 ipcRenderer.send('stop-server');
