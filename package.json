@@ -13,11 +13,17 @@
   "build": {
     "productName": "Electron print server",
     "win": {
-      "target": [ "portable", "nsis" ],
+      "target": [
+        "portable",
+        "nsis"
+      ],
       "extraResources": "./external/SumatraPDFx64.exe"
     },
     "linux": {
-      "target": [ "tar.gz", "deb" ],
+      "target": [
+        "tar.gz",
+        "deb"
+      ],
       "category": "Printing"
     }
   },
@@ -28,7 +34,7 @@
     "@types/express": "4.11.1",
     "body-parser": "^1.18.3",
     "debug": "^4.0.1",
-    "electron": "2.0.7",
+    "electron": "2.0.8",
     "electron-builder": "20.28.1",
     "electron-settings": "^3.2.0",
     "electron-webpack": "2.1.2",
