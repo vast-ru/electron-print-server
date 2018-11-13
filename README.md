@@ -96,6 +96,7 @@ Needs discussion:
 - [ ] Authentication
 - [ ] Using another HTTP-method for `/print` (POST? PUT?)
 - [ ] More debugging options
+- [ ] Disallow multiple running instances
 
 Not important:
 
