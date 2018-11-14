@@ -86,6 +86,7 @@ Important:
 - [x] Test different paper sizes (e.g. with label printer)
 - [x] Server control (currently application is still running after closing window)
 - [x] Settings GUI (settings may appear after testing)
+- [ ] Additional printing settings (e.g. Sumatra PDF `-print-settings`)
 
 Other:
 
