@@ -16,7 +16,10 @@ and simple printing from any device in local network
     {
       "jobs": [{
         "url": "http://example.test/some/document.html",
-        "printer": "Some PDF Printer"
+        "printer": "Some PDF Printer",
+        "settings": {
+          "duplex": "short" // "long" | "simplex"
+        }
       }]
     }
     ```

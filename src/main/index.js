@@ -10,6 +10,7 @@ import os from 'os';
 import * as path from 'path';
 import tmp from 'tmp';
 import { format as formatUrl } from 'url';
+import packageJson from '../../package.json';
 
 const d = debug('electron-print-server');
 
@@ -20,7 +21,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 let mainWindow, tray;
 
 function createMainWindow() {
-    const win = new BrowserWindow({ show: false });
+    const win = new BrowserWindow({ show: false, title: 'Print server (version ' + packageJson.version + ')' });
 
     if (isDevelopment) {
         win.webContents.openDevTools();
@@ -154,7 +155,8 @@ expressApp.post('/print', (req, res) => {
     const jobs = req.body.jobs;
     d('Printing %d jobs', jobs.length);
     Promise.all(jobs.map(job => {
-        return printUrl(job.url, job.printer).then(() => true, () => false);
+        return printUrl(job.url, job.printer, job.settings)
+            .then(() => true, () => false);
     })).then(results => {
         res.json(results);
     });
@@ -165,9 +167,9 @@ ipcMain.on('get-printers', e => {
     e.returnValue = webContents.getPrinters();
 });
 
-ipcMain.on('print', ({ sender }, { url, printer }) => {
+ipcMain.on('print', ({ sender }, { url, printer, settings }) => {
     webContents = sender;
-    printUrl(url, printer).then(() => {
+    printUrl(url, printer, settings).then(() => {
         webContents.send('print-result', { success: true });
     }, error => {
         webContents.send('print-result', { success: false, error });
@@ -245,7 +247,7 @@ function startServer(hostname, port, { useHttps, httpsCert, httpsCertKey }) {
     });
 }
 
-function printUrl(url, printer) {
+function printUrl(url, printer, printSettings) {
     if (!webContents) {
         return Promise.reject(new Error('No web contents'));
     }
@@ -274,7 +276,7 @@ function printUrl(url, printer) {
                         reject(err);
                         return;
                     }
-                    printFile(fileName, printer).then(out => {
+                    printFile(fileName, printer, printSettings).then(out => {
                         d('Print output: %s', out);
                         resolve(out);
                     }, err => {
@@ -287,19 +289,33 @@ function printUrl(url, printer) {
     });
 }
 
-function printFile(fileName, printer) {
+function printFile(fileName, printer, printSettings) {
     return new Promise((resolve, reject) => {
         let command;
+        const printerEscaped  = printer.replace('"', '\\"');
+        const fileNameEscaped = fileName.replace('"', '\\"');
         // Not supporting other platforms
         // noinspection SwitchStatementWithNoDefaultBranchJS
         switch (process.platform) {
             case 'linux':
-                command = `lp -d "${printer}" "${fileName}"`;
+                command = [
+                    'lp',
+                    printSettingsToLpFormat(printSettings),
+                    `-d "${printerEscaped}"`,
+                    fileNameEscaped
+                ].join(' ');
                 break;
             case 'win32':
-                command = `${extraResourcePath('SumatraPDFx64.exe')} -print-to "${printer}" -silent "${fileName}"`;
+                command = [
+                    extraResourcePath('SumatraPDFx64.exe'),
+                    `-print-to "${printerEscaped}"`,
+                    `-print-settings "${printSettingsToSumatraFormat(printSettings)}"`,
+                    '-silent',
+                    `"${fileNameEscaped}"`,
+                ].join(' ');
                 break;
         }
+        d(`Executing: $${command}`);
         childProcess.exec(command, {}, (err, stdout) => {
             if (err) {
                 d('Shell exec error: %s', err.message);
@@ -309,6 +325,38 @@ function printFile(fileName, printer) {
             resolve(stdout);
         });
     });
+}
+
+function printSettingsToLpFormat(printSettings) {
+    if (!printSettings) {
+        return '';
+    }
+    const parts = [];
+    if (printSettings.duplex) {
+        parts.push('-o sides=' + {
+            simplex: 'one-sided',
+            short  : 'two-sided-short-edge',
+            long   : 'two-sided-long-edge',
+        }[printSettings.duplex]);
+    }
+
+    return parts.join(' ');
+}
+
+function printSettingsToSumatraFormat(printSettings) {
+    if (!printSettings) {
+        return '';
+    }
+    const parts = [];
+    if (printSettings.duplex) {
+        parts.push({
+            simplex: 'simplex',
+            short  : 'duplexshort',
+            long   : 'duplexlong',
+        }[printSettings.duplex]);
+    }
+
+    return parts.join(',');
 }
 
 function extraResourcePath(p) {
