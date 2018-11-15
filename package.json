@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@types/express": "4.11.1",
+    "babel-preset-flow": "^6.23.0",
     "body-parser": "^1.18.3",
     "debug": "^4.0.1",
     "electron": "2.0.8",
@@ -40,6 +41,7 @@
     "electron-webpack": "2.1.2",
     "electron-webpack-vue": "2.1.2",
     "express": "4.16.2",
+    "flow-bin": "^0.86.0",
     "lodash": "^4.17.11",
     "tmp": "^0.0.33",
     "vue": "2.5.17",
