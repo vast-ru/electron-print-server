@@ -1,3 +1,4 @@
+// @flow
 import bodyParser from 'body-parser';
 import childProcess from 'child_process';
 import debug from 'debug';
@@ -146,13 +147,20 @@ expressApp.use(function(req, res, next) {
     next();
 });
 expressApp.use(bodyParser.urlencoded());
+expressApp.use(bodyParser.json());
 
 expressApp.get('/printers', (req, res) => {
     res.json(webContents ? webContents.getPrinters() : null);
 });
 
+type Job = {
+    printer: string,
+    url: string,
+    settings: PrintSettings,
+};
+
 expressApp.post('/print', (req, res) => {
-    const jobs = req.body.jobs;
+    const jobs: Job[] = req.body.jobs;
     d('Printing %d jobs', jobs.length);
     Promise.all(jobs.map(job => {
         return printUrl(job.url, job.printer, job.settings)
@@ -247,7 +255,7 @@ function startServer(hostname, port, { useHttps, httpsCert, httpsCertKey }) {
     });
 }
 
-function printUrl(url, printer, printSettings) {
+function printUrl(url, printer, printSettings: PrintSettings) {
     if (!webContents) {
         return Promise.reject(new Error('No web contents'));
     }
@@ -289,7 +297,7 @@ function printUrl(url, printer, printSettings) {
     });
 }
 
-function printFile(fileName, printer, printSettings) {
+function printFile(fileName, printer, printSettings: PrintSettings) {
     return new Promise((resolve, reject) => {
         let command;
         const printerEscaped  = printer.replace('"', '\\"');
@@ -315,7 +323,7 @@ function printFile(fileName, printer, printSettings) {
                 ].join(' ');
                 break;
         }
-        d(`Executing: $${command}`);
+        d(`Executing: ${command}`);
         childProcess.exec(command, {}, (err, stdout) => {
             if (err) {
                 d('Shell exec error: %s', err.message);
@@ -327,7 +335,12 @@ function printFile(fileName, printer, printSettings) {
     });
 }
 
-function printSettingsToLpFormat(printSettings) {
+type PrintSettings = {
+    duplex?: 'simplex' | 'short' | 'long',
+    copies?: number,
+};
+
+function printSettingsToLpFormat(printSettings: PrintSettings) {
     if (!printSettings) {
         return '';
     }
@@ -340,10 +353,14 @@ function printSettingsToLpFormat(printSettings) {
         }[printSettings.duplex]);
     }
 
+    if (printSettings.copies && printSettings.copies > 1) {
+        parts.push('-n ' + printSettings.copies);
+    }
+
     return parts.join(' ');
 }
 
-function printSettingsToSumatraFormat(printSettings) {
+function printSettingsToSumatraFormat(printSettings: PrintSettings) {
     if (!printSettings) {
         return '';
     }
@@ -354,6 +371,10 @@ function printSettingsToSumatraFormat(printSettings) {
             short  : 'duplexshort',
             long   : 'duplexlong',
         }[printSettings.duplex]);
+    }
+
+    if (printSettings.copies && printSettings.copies > 1) {
+        parts.push(printSettings.copies + 'x');
     }
 
     return parts.join(',');
