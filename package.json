@@ -12,6 +12,9 @@
   },
   "build": {
     "productName": "Electron print server",
+    "nsis": {
+      "oneClick": false
+    },
     "win": {
       "target": [
         "portable",
