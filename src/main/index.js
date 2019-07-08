@@ -22,7 +22,13 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 let mainWindow, tray;
 
 function createMainWindow() {
-    const win = new BrowserWindow({ show: false, title: 'Print server (version ' + packageJson.version + ')' });
+    const win = new BrowserWindow({
+        webPreferences: {
+            nodeIntegration: true,
+        },
+        show: false,
+        title: 'Print server (version ' + packageJson.version + ')',
+    });
 
     if (isDevelopment) {
         win.webContents.openDevTools();
