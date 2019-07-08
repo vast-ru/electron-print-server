@@ -17,7 +17,7 @@
         "portable",
         "nsis"
       ],
-      "extraResources": "./external/SumatraPDFx64.exe"
+      "extraResources": "./external/win32/${arch}"
     },
     "linux": {
       "target": [

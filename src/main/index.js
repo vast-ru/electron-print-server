@@ -315,7 +315,11 @@ function printFile(fileName, printer, printSettings: PrintSettings) {
                 break;
             case 'win32':
                 command = [
-                    extraResourcePath('SumatraPDFx64.exe'),
+                    extraResourcePath(
+                        process.platform,
+                        process.arch,
+                        'SumatraPDF.exe'
+                    ),
                     `-print-to "${printerEscaped}"`,
                     `-print-settings "${printSettingsToSumatraFormat(printSettings)}"`,
                     '-silent',
@@ -380,11 +384,11 @@ function printSettingsToSumatraFormat(printSettings: PrintSettings) {
     return parts.join(',');
 }
 
-function extraResourcePath(p) {
+function extraResourcePath(...p) {
     if (isDevelopment) {
-        return path.resolve(__dirname, '../../external', p);
+        return path.resolve(__dirname, '../../external', ...p);
     } else {
-        return path.join(process.resourcesPath, 'external', p);
+        return path.join(process.resourcesPath, 'external', ...p);
     }
 }
 
