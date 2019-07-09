@@ -10,26 +10,6 @@
     "dist": "yarn compile && electron-builder",
     "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null"
   },
-  "build": {
-    "productName": "Electron print server",
-    "nsis": {
-      "oneClick": false
-    },
-    "win": {
-      "target": [
-        "portable",
-        "nsis"
-      ],
-      "extraResources": "./external/win32/${arch}"
-    },
-    "linux": {
-      "target": [
-        "tar.gz",
-        "deb"
-      ],
-      "category": "Printing"
-    }
-  },
   "dependencies": {
     "source-map-support": "0.5.12"
   },
