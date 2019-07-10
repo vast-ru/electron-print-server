@@ -2,7 +2,8 @@
   "name": "electron-print-server",
   "description": "Print server for printing URLs on local printers",
   "author": "jbot <monstion@gmail.com>",
-  "version": "0.4.0",
+  "homepage": "https://github.com/vast-ru/electron-print-server",
+  "version": "0.4.1",
   "license": "MIT",
   "scripts": {
     "dev": "electron-webpack dev",
