@@ -1,13 +1,12 @@
 module.exports = () => {
-    const artifactName = process.env.BUILD_NUMBER
-        ? '${productName}-${version}.${env.BUILD_NUMBER}-${os}-${arch}.${ext}'
-        : '${productName}-${version}-${platform}-${os}.${ext}';
+    const buildStr = process.env.BUILD_NUMBER ? '.${env.BUILD_NUMBER}' : '';
     return {
         productName : "Electron print server",
         nsis        : {
-            oneClick: false,
+            oneClick    : false,
+            artifactName: '${productName}-${version}' + buildStr + '-${os}-${arch}-Installer.${ext}',
         },
-        artifactName: artifactName,
+        artifactName: '${productName}-${version}' + buildStr + '-${os}-${arch}.${ext}',
         win         : {
             target        : [
                 {
