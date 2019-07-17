@@ -1,5 +1,8 @@
 // @flow
 import bodyParser from 'body-parser';
+import axios from 'axios';
+import pify from 'pify';
+import contentType from 'content-type';
 import childProcess from 'child_process';
 import debug from 'debug';
 import { app, BrowserWindow, ipcMain, Menu, Tray } from 'electron';
@@ -265,43 +268,51 @@ function startServer(hostname, port, { useHttps, httpsCert, httpsCertKey }) {
 }
 
 function printUrl(url, printer, printSettings: PrintSettings) {
-    if (!webContents) {
-        return Promise.reject(new Error('No web contents'));
-    }
-    d('Printing URL %s on printer %s', url, printer);
-    const w = new BrowserWindow({
-        show: false,
-    });
-    w.loadURL(url, { userAgent: 'ElectronPrintServer / 0.0.1' });
+    d('Loading url %s', url);
 
-    return new Promise((resolve, reject) => {
-        w.webContents.once('did-finish-load', () => {
-            w.webContents.printToPDF({}, (err, data) => {
-                w.close();
-                if (err) {
-                    d('Print to PDF error: %s', err.message);
-                    reject(err);
-                    return;
-                }
-                const fileName = tmp.fileSync({
-                    prefix: 'print_',
-                    postfix: '.pdf',
-                }).name;
-                fs.writeFile(fileName, data, err => {
-                    if (err) {
-                        d('PDF write error: %s', err.message);
-                        reject(err);
-                        return;
-                    }
-                    printFile(fileName, printer, printSettings).then(out => {
-                        d('Print output: %s', out);
-                        resolve(out);
-                    }, err => {
-                        d('Print error: %s', err.message);
-                        reject(err);
-                    });
-                })
-            });
+    return axios.get(url, {
+        responseType: 'arraybuffer'
+    }).then(r => {
+        const { type } = contentType.parse(r.headers['content-type']);
+
+        if (type === 'application/pdf') {
+            d('Content type is %s, printing directly', type);
+            console.log(typeof r.data);
+            return Promise.resolve(r.data);
+        }
+
+        d('Content type is %s, converting to PDF', type);
+
+        const w = new BrowserWindow({
+            show: false,
+        });
+
+        return w.loadURL(url, {
+            userAgent: 'ElectronPrintServer / ' + packageJson.version,
+        }).then(() => {
+            return pify(w.webContents.printToPDF.bind(w.webContents))({});
+        }).catch(e => {
+            d('Convert to PDF error: %s', e.message);
+            throw e;
+        }).finally(() => {
+            w.close();
+        });
+    }).then(data => {
+        const fileName = tmp.fileSync({
+            prefix: 'print_',
+            postfix: '.pdf',
+        }).name;
+
+        return pify(fs.writeFile)(fileName, data).then(() => {
+            return fileName;
+        }, e => {
+            d('PDF write error: %s', e.message);
+            throw e;
+        });
+    }).then(fileName => {
+        return printFile(fileName, printer, printSettings).catch(e => {
+            d('Print error: %s', e.message);
+            throw e;
         });
     });
 }
