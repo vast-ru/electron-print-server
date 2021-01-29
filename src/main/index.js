@@ -290,7 +290,7 @@ function printUrl(url, printer, printSettings: PrintSettings) {
         return w.loadURL(url, {
             userAgent: 'ElectronPrintServer / ' + packageJson.version,
         }).then(() => {
-            return pify(w.webContents.printToPDF.bind(w.webContents))({});
+            return w.webContents.printToPDF({});
         }).catch(e => {
             d('Convert to PDF error: %s', e.message);
             throw e;
