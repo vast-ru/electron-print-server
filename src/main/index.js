@@ -1,14 +1,13 @@
 // @flow
 import bodyParser from 'body-parser';
 import axios from 'axios';
-import pify from 'pify';
 import contentType from 'content-type';
 import childProcess from 'child_process';
 import debug from 'debug';
 import { app, BrowserWindow, ipcMain, Menu, Tray } from 'electron';
 import settings from 'electron-settings';
 import express from 'express';
-import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import https from 'https';
 import os from 'os';
 import * as path from 'path';
@@ -303,7 +302,7 @@ function printUrl(url, printer, printSettings: PrintSettings) {
             postfix: '.pdf',
         }).name;
 
-        return pify(fs.writeFile)(fileName, data).then(() => {
+        return fsPromises.writeFile(fileName, data).then(() => {
             return fileName;
         }, e => {
             d('PDF write error: %s', e.message);

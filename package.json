@@ -11,6 +11,9 @@
     "dist": "yarn compile && electron-builder",
     "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null"
   },
+  "engines": {
+    "node": ">= 10.0.0"
+  },
   "dependencies": {
     "source-map-support": "0.5.12"
   },
@@ -29,7 +32,6 @@
     "express": "4.17.1",
     "flow-bin": "^0.86.0",
     "lodash": "4.17.19",
-    "pify": "^4.0.1",
     "tmp": "0.1.0",
     "vue": "2.6.10",
     "vue-template-compiler": "2.6.10",
