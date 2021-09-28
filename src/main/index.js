@@ -296,6 +296,14 @@ function printUrl(url, printer, printSettings: PrintSettings) {
         }).finally(() => {
             w.close();
         });
+    }, e => {
+        d('Error loading URL:', e.message);
+
+        if (e.response) {
+            d('Raw response:', (e.response.data).toString());
+        }
+
+        throw e;
     }).then(data => {
         const fileName = tmp.fileSync({
             prefix: 'print_',
