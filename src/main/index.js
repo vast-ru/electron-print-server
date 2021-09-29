@@ -276,7 +276,6 @@ function printUrl(url, printer, printSettings: PrintSettings) {
 
         if (type === 'application/pdf') {
             d('Content type is %s, printing directly', type);
-            console.log(typeof r.data);
             return Promise.resolve(r.data);
         }
 
@@ -369,6 +368,7 @@ function printFile(fileName, printer, printSettings: PrintSettings) {
 type PrintSettings = {
     duplex?: 'simplex' | 'short' | 'long',
     copies?: number,
+    orientation?: 'portrait' | 'landscape',
 };
 
 function printSettingsToLpFormat(printSettings: PrintSettings) {
@@ -386,6 +386,14 @@ function printSettingsToLpFormat(printSettings: PrintSettings) {
 
     if (printSettings.copies && printSettings.copies > 1) {
         parts.push('-n ' + printSettings.copies);
+    }
+
+    if (printSettings.orientation) {
+        parts.push(printSettings.orientation);
+        parts.push('-o orientation-requested=' + {
+            portrait : 3,
+            landscape: 4,
+        }[printSettings.orientation]);
     }
 
     return parts.join(' ');
@@ -406,6 +414,10 @@ function printSettingsToSumatraFormat(printSettings: PrintSettings) {
 
     if (printSettings.copies && printSettings.copies > 1) {
         parts.push(printSettings.copies + 'x');
+    }
+
+    if (printSettings.orientation) {
+        parts.push(printSettings.orientation);
     }
 
     return parts.join(',');
