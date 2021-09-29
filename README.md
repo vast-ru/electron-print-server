@@ -12,13 +12,13 @@ and simple printing from any device in local network
 
 - `POST /print` - print specified URLS. Request body should have following format:
 
-    ```json
+    ```json5
     {
       "jobs": [{
-        "url": "http://example.test/some/document.html",
+        "url": "https://example.test/some/document.html",
         "printer": "Some PDF Printer",
         "settings": {
-          "duplex": "short" /* "long" | "simplex" */, 
+          "duplex": "short", // "long" | "simplex" 
           "copies": 2
         }
       }]
@@ -99,7 +99,7 @@ Other:
 Needs discussion:
 
 - [ ] Authentication
-- [ ] Using another HTTP-method for `/print` (POST? PUT?)
+- [x] Using another HTTP-method for `/print` (POST? PUT?)
 - [ ] More debugging options
 - [ ] Disallow multiple running instances
 
