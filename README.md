@@ -19,7 +19,8 @@ and simple printing from any device in local network
         "printer": "Some PDF Printer",
         "settings": {
           "duplex": "short", // "long" | "simplex" 
-          "copies": 2
+          "copies": 2,
+          "orientation": "portrait" // "landscape"
         }
       }]
     }
