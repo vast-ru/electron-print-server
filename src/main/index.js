@@ -334,11 +334,11 @@ function printFile(fileName, printer, printSettings: PrintSettings) {
                 break;
             case 'win32':
                 command = [
-                    extraResourcePath(
+                    `"${extraResourcePath(
                         process.platform,
                         process.arch,
                         'SumatraPDF.exe'
-                    ),
+                    )}"`,
                     `-print-to "${printerEscaped}"`,
                     `-print-settings "${printSettingsToSumatraFormat(printSettings)}"`,
                     '-silent',
