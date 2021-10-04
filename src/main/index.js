@@ -1,4 +1,5 @@
 // @flow
+import * as remote from '@electron/remote/main';
 import bodyParser from 'body-parser';
 import axios from 'axios';
 import contentType from 'content-type';
@@ -15,6 +16,8 @@ import tmp from 'tmp';
 import { format as formatUrl } from 'url';
 import packageJson from '../../package.json';
 
+remote.initialize();
+
 const d = debug('electron-print-server');
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -27,6 +30,7 @@ function createMainWindow() {
     const win = new BrowserWindow({
         webPreferences: {
             nodeIntegration: true,
+            contextIsolation: false,
         },
         show: false,
         title: 'Print server (version ' + packageJson.version + ')',
@@ -35,6 +39,8 @@ function createMainWindow() {
     if (isDevelopment) {
         win.webContents.openDevTools();
     }
+
+    remote.enable(win.webContents);
 
     if (isDevelopment) {
         win.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`);
@@ -123,14 +129,14 @@ app.on('ready', () => {
 
     tray = createTray();
 
-    if (settings.get('server.autostart')) {
-        const address = settings.get('server.ip');
-        const port = settings.get('server.port');
+    if (settings.getSync('server.autostart')) {
+        const address = settings.getSync('server.ip');
+        const port = settings.getSync('server.port');
         if (address && port) {
             startServer(address, port, {
-                useHttps: settings.get('server.https.enabled', false),
-                httpsCert: settings.get('server.https.cert', ''),
-                httpsCertKey: settings.get('server.https.certKey', ''),
+                useHttps: settings.getSync('server.https.enabled') || false,
+                httpsCert: settings.getSync('server.https.cert') || '',
+                httpsCertKey: settings.getSync('server.https.certKey') || '',
             });
         }
     }

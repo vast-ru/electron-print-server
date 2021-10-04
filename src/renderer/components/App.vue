@@ -68,17 +68,21 @@
     import settings from 'electron-settings';
     import flatten from 'lodash/flatten';
 
+    const getSetting = (path, def) => {
+      return settings.hasSync(path) ? settings.getSync(path) : def;
+    };
+
     export default {
         data() {
             return {
                 availableIps   : [],
-                serverIp       : settings.get('server.ip', null),
-                serverPort     : settings.get('server.port', 3030),
-                serverHttps    : settings.get('server.https.enabled', false),
-                httpsCert      : settings.get('server.https.cert', ''),
-                httpsCertKey   : settings.get('server.https.certKey', ''),
+                serverIp       : getSetting('server.ip', null),
+                serverPort     : getSetting('server.port', 3030),
+                serverHttps    : getSetting('server.https.enabled', false),
+                httpsCert      : getSetting('server.https.cert', ''),
+                httpsCertKey   : getSetting('server.https.certKey', ''),
                 serverState    : '',
-                serverAutostart: settings.get('server.autostart', false),
+                serverAutostart: getSetting('server.autostart', false),
 
                 availablePrinters: [],
                 printer          : null,
@@ -112,22 +116,22 @@
         },
         watch: {
             serverIp(ip) {
-                settings.set('server.ip', ip);
+                settings.setSync('server.ip', ip);
             },
             serverPort(port) {
-                settings.set('server.port', port);
+                settings.setSync('server.port', port);
             },
             serverHttps(useHttps) {
-                settings.set('server.https.enabled', useHttps);
+                settings.setSync('server.https.enabled', useHttps);
             },
             httpsCert(cert) {
-                settings.set('server.https.cert', cert);
+                settings.setSync('server.https.cert', cert);
             },
             httpsCertKey(key) {
-                settings.set('server.https.certKey', key);
+                settings.setSync('server.https.certKey', key);
             },
             serverAutostart(autostart) {
-                settings.set('server.autostart', autostart);
+                settings.setSync('server.autostart', autostart);
             },
         },
         methods: {

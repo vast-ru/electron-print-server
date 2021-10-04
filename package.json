@@ -3,7 +3,7 @@
   "description": "Print server for printing URLs on local printers",
   "author": "jbot <monstion@gmail.com>",
   "homepage": "https://github.com/vast-ru/electron-print-server",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "license": "MIT",
   "scripts": {
     "dev": "electron-webpack dev",
@@ -18,15 +18,16 @@
     "source-map-support": "0.5.12"
   },
   "devDependencies": {
+    "@electron/remote": "^2.0.1",
     "@types/express": "4.17.0",
     "axios": "~0.21.2",
     "babel-preset-flow": "^6.23.0",
     "body-parser": "1.19.0",
     "content-type": "~1.0.4",
     "debug": "4.1.1",
-    "electron": "9.4.0",
+    "electron": "15.1.0",
     "electron-builder": "20.44.4",
-    "electron-settings": "3.2.0",
+    "electron-settings": "^4.0.0",
     "electron-webpack": "2.7.2",
     "electron-webpack-vue": "2.3.0",
     "express": "4.17.1",
