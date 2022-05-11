@@ -37,7 +37,7 @@
     "vue": "2.6.10",
     "vue-template-compiler": "2.6.10",
     "webpack": "4.35.2",
-    "webpack-build-notifier": "1.0.3"
+    "webpack-build-notifier": "2.3.0"
   },
   "packageManager": "yarn@3.2.0"
 }
