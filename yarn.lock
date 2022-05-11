@@ -8150,17 +8150,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"plist@npm:^3.0.1":
-  version: 3.0.4
-  resolution: "plist@npm:3.0.4"
-  dependencies:
-    base64-js: ^1.5.1
-    xmlbuilder: ^9.0.7
-  checksum: cb5883ed1b1aa227ddc5f99003750d312a8ac5cfd6f58d3ce0b24939255b175b54f25ebc6adcbd4266105ffd54f6831acb6cb06f529652bb3344215c10f5601b
-  languageName: node
-  linkType: hard
-
-"plist@npm:^3.0.4":
+"plist@npm:^3.0.1, plist@npm:^3.0.4":
   version: 3.0.5
   resolution: "plist@npm:3.0.5"
   dependencies:
