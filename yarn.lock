@@ -2393,15 +2393,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cacache@npm:^11.3.2":
-  version: 11.3.3
-  resolution: "cacache@npm:11.3.3"
+"cacache@npm:^12.0.2":
+  version: 12.0.4
+  resolution: "cacache@npm:12.0.4"
   dependencies:
     bluebird: ^3.5.5
     chownr: ^1.1.1
     figgy-pudding: ^3.5.1
     glob: ^7.1.4
     graceful-fs: ^4.1.15
+    infer-owner: ^1.0.3
     lru-cache: ^5.1.1
     mississippi: ^3.0.0
     mkdirp: ^0.5.1
@@ -2411,7 +2412,7 @@ __metadata:
     ssri: ^6.0.1
     unique-filename: ^1.1.1
     y18n: ^4.0.0
-  checksum: e66dd0f0b3e9a8a18fd6e027b15848920fc52fe2264cb7b11efa6553576a34b42d6b4b93b05c453269bc8e31adb2e63c092651a553a6f6d6b9d9fce8129b50cb
+  checksum: c88a72f36939b2523533946ffb27828443db5bf5995d761b35ae17af1eb6c8e20ac55b00b74c2ca900b2e1e917f0afba6847bf8cc16bee05ccca6aa150e0830c
   languageName: node
   linkType: hard
 
@@ -4385,7 +4386,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"find-cache-dir@npm:^2.0.0":
+"find-cache-dir@npm:^2.0.0, find-cache-dir@npm:^2.1.0":
   version: 2.1.0
   resolution: "find-cache-dir@npm:2.1.0"
   dependencies:
@@ -5420,7 +5421,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"infer-owner@npm:^1.0.4":
+"infer-owner@npm:^1.0.3, infer-owner@npm:^1.0.4":
   version: 1.0.4
   resolution: "infer-owner@npm:1.0.4"
   checksum: 181e732764e4a0611576466b4b87dac338972b839920b2a8cde43642e4ed6bd54dc1fb0b40874728f2a2df9a1b097b8ff83b56d5f8f8e3927f837fdcb47d8a89
@@ -8036,6 +8037,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"randombytes@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "randombytes@npm:2.1.0"
+  dependencies:
+    safe-buffer: ^5.1.0
+  checksum: d779499376bd4cbb435ef3ab9a957006c8682f343f14089ed5f27764e4645114196e75b7f6abf1cbd84fd247c0cb0651698444df8c9bf30e62120fbbc52269d6
+  languageName: node
+  linkType: hard
+
 "randomfill@npm:^1.0.3":
   version: 1.0.4
   resolution: "randomfill@npm:1.0.4"
@@ -8702,10 +8712,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"serialize-javascript@npm:^1.7.0":
-  version: 1.7.0
-  resolution: "serialize-javascript@npm:1.7.0"
-  checksum: 098f309f50ab8978ed4bbdcd5bc9fb6d4898400299111513a1cd55bb265a39ecd783f10afebe02f3e703cdcbb9ffeac342dc8a222c5d60e337db12b86698e8fc
+"serialize-javascript@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "serialize-javascript@npm:4.0.0"
+  dependencies:
+    randombytes: ^2.1.0
+  checksum: 3273b3394b951671fcf388726e9577021870dfbf85e742a1183fb2e91273e6101bdccea81ff230724f6659a7ee4cef924b0ff9baca32b79d9384ec37caf07302
   languageName: node
   linkType: hard
 
@@ -9377,39 +9389,25 @@ __metadata:
   linkType: hard
 
 "terser-webpack-plugin@npm:^1.1.0, terser-webpack-plugin@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "terser-webpack-plugin@npm:1.3.0"
+  version: 1.4.5
+  resolution: "terser-webpack-plugin@npm:1.4.5"
   dependencies:
-    cacache: ^11.3.2
-    find-cache-dir: ^2.0.0
+    cacache: ^12.0.2
+    find-cache-dir: ^2.1.0
     is-wsl: ^1.1.0
-    loader-utils: ^1.2.3
     schema-utils: ^1.0.0
-    serialize-javascript: ^1.7.0
+    serialize-javascript: ^4.0.0
     source-map: ^0.6.1
-    terser: ^4.0.0
-    webpack-sources: ^1.3.0
+    terser: ^4.1.2
+    webpack-sources: ^1.4.0
     worker-farm: ^1.7.0
   peerDependencies:
     webpack: ^4.0.0
-  checksum: 4faf6f7d10fe65ed602ba04977c592eaab4ac53f56cb0971cd36df52505c4e51559ae7d44baf32e993165854a38a4c4855af8d0d78e34d06d94c120e83a3bfe4
+  checksum: 02aada80927d3c8105d69cb00384d307b73aed67d180db5d20023a8d649149f3803ad50f9cd2ef9eb2622005de87e677198ecc5088f51422bfac5d4d57472d0e
   languageName: node
   linkType: hard
 
-"terser@npm:^4.0.0":
-  version: 4.1.0
-  resolution: "terser@npm:4.1.0"
-  dependencies:
-    commander: ^2.20.0
-    source-map: ~0.6.1
-    source-map-support: ~0.5.12
-  bin:
-    terser: bin/uglifyjs
-  checksum: 66fde44dfb1b24d8263895015bbe95ef2ff016d427d5bc96c7317a9057fec5f2a251423855807a4e036cdca6e25c3f2d6f7b7eef08421f4e1018abdf4cd9fb7c
-  languageName: node
-  linkType: hard
-
-"terser@npm:^4.6.3":
+"terser@npm:^4.1.2, terser@npm:^4.6.3":
   version: 4.8.0
   resolution: "terser@npm:4.8.0"
   dependencies:
@@ -10199,6 +10197,16 @@ __metadata:
     source-list-map: ^2.0.0
     source-map: ~0.6.1
   checksum: bfae863a9e5278732a2619aba3484d72eb955a395c5f3e1958a825e9c4856cfa6f37aed3efaab8ae229deb9e19af992460dd6861e3feff85e204473eb14ef9f7
+  languageName: node
+  linkType: hard
+
+"webpack-sources@npm:^1.4.0":
+  version: 1.4.3
+  resolution: "webpack-sources@npm:1.4.3"
+  dependencies:
+    source-list-map: ^2.0.0
+    source-map: ~0.6.1
+  checksum: 37463dad8d08114930f4bc4882a9602941f07c9f0efa9b6bc78738cd936275b990a596d801ef450d022bb005b109b9f451dd087db2f3c9baf53e8e22cf388f79
   languageName: node
   linkType: hard
 
