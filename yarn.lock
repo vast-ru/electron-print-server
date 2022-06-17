@@ -4050,7 +4050,7 @@ __metadata:
     body-parser: 1.19.0
     content-type: ~1.0.4
     debug: 4.1.1
-    electron: 15.3.5
+    electron: 15.5.5
     electron-builder: 23.0.9
     electron-settings: ^4.0.0
     electron-webpack: 2.7.2
@@ -4172,16 +4172,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:15.3.5":
-  version: 15.3.5
-  resolution: "electron@npm:15.3.5"
+"electron@npm:15.5.5":
+  version: 15.5.5
+  resolution: "electron@npm:15.5.5"
   dependencies:
     "@electron/get": ^1.13.0
     "@types/node": ^14.6.2
     extract-zip: ^1.0.3
   bin:
     electron: cli.js
-  checksum: c1904f9ff1a3dbec2821db21eb8d70b9c9b910406bcddcd3231d00d7c783f80b5f7f4dc31297bb07f997f30dd66a36fa207d9b30a4ef7a0771bee3011268036b
+  checksum: bbb661b4a14321be382bb9d5f89893089b82b04abfc51f8e77971b87fe9e7aa26cd0d33fbb20333e12bf853edd4059f506f15b008392bdbaee80023d328ebfec
   languageName: node
   linkType: hard
 
