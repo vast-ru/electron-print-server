@@ -7,6 +7,7 @@ module.exports = () => {
             artifactName: '${productName}-${version}' + buildStr + '-${os}-${arch}-Installer.${ext}',
         },
         artifactName: '${productName}-${version}' + buildStr + '-${os}-${arch}.${ext}',
+        extraResources: './external/fonts',
         win         : {
             target        : [
                 {

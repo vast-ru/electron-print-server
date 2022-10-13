@@ -1,64 +1,68 @@
 <template>
     <div>
         <div>
-            <h3>Настройки сервера</h3>
-            <select v-model="serverIp" :disabled="serverState === 'running'">
-                <option v-for="ip in availableIps" :value="ip">{{ ip }}</option>
-            </select>
-            <input type="text" v-model="serverPort" placeholder="3030"/>
-            <label title="Использовать защищенное соединение">
-                <input type="checkbox"
-                    v-model="serverHttps"
-                    :disabled="serverState === 'running'"
-                />
-                HTTPS
-            </label>
+            <h3>Статус: {{ serverStateText }}</h3>
             <button
                 @click="startServer()"
-                :disabled="serverState === 'running' || !serverIp || (serverHttps && (!httpsCert || !httpsCertKey))"
-            >On</button>
+                v-if="serverState === 'stopped'"
+                :disabled="!serverIp"
+            >Запуск</button>
             <button
+                v-if="serverState === 'running'"
                 @click="stopServer()"
-                :disabled="serverState !== 'running'"
-            >Off</button>
-            <div>
-                Статус: {{ serverStateText }}
-                <button v-if="serverState === 'running'" @click="copyAddress()">Скопировать адрес</button>
-            </div>
-            <div>
-                <label>
-                    <input type="checkbox" v-model="serverAutostart"/>
-                    Автозапуск сервера при старте приложения
-                </label>
+            >Стоп</button>
+            <div v-if="serverState === 'running'">
+                <button @click="copyAddress()">Скопировать адрес</button>
             </div>
         </div>
 
         <div>
             <h3>Проверка печати</h3>
-            <input type="text" v-model="urlToPrint">
-            <select v-model="printer">
-                <option v-for="p in availablePrinters" :value="p.name">{{ p.name }}</option>
-            </select>
-            <button @click="print()" :disabled="printer === null">Напечатать</button>
+            <p>
+                <label>
+                    Принтер
+                    <select v-model="printer">
+                        <option v-for="p in availablePrinters" :value="p.name">{{ p.name }}</option>
+                    </select>
+                </label>
+            </p>
+            <p>
+                <label>
+                    Размер бумаги
+                    <select v-model="paperFormat">
+                        <option v-for="size in paperFormats" :value="size">{{ size }}</option>
+                    </select>
+                </label>
+            </p>
+            <button @click="print()" :disabled="!printer || !paperFormat">Напечатать</button>
             {{ printResult }}
         </div>
 
-        <div v-if="serverHttps">
-            <h3>HTTPS</h3>
+        <p>
+            <button @click="extras = !extras">Расширенные настройки</button>
+        </p>
+        <div v-if="extras">
+            <h3>Расширенные настройки</h3>
             <p>
-                Сертификат (файл .crt)<br/>
-                <textarea rows="4" cols="64"
-                    v-model="httpsCert"
-                    placeholder="Вставьте содержимое файла .crt"
-                ></textarea>
+                <label>
+                    <input type="checkbox" v-model="serverAutostart"/>
+                    Автозапуск сервера при старте приложения
+                </label>
             </p>
-            <p>
-                Ключ сертификата (файл .key)<br/>
-                <textarea rows="4" cols="64"
-                    v-model="httpsCertKey"
-                    placeholder="Вставьте содержимое файла .key"
-                ></textarea>
-            </p>
+            <div>
+                <label>
+                    Адрес
+                    <select v-model="serverIp" :disabled="serverState === 'running'">
+                        <option v-for="ip in availableIps" :value="ip">{{ ip }}</option>
+                    </select>
+                </label>
+            </div>
+            <div>
+                <label>
+                    Порт
+                    <input type="text" v-model="serverPort" placeholder="3030"/>
+                </label>
+            </div>
         </div>
     </div>
 </template>
@@ -76,17 +80,21 @@
         data() {
             return {
                 availableIps   : [],
-                serverIp       : getSetting('server.ip', null),
+                serverIp       : getSetting('server.ip', 'localhost'),
                 serverPort     : getSetting('server.port', 3030),
-                serverHttps    : getSetting('server.https.enabled', false),
-                httpsCert      : getSetting('server.https.cert', ''),
-                httpsCertKey   : getSetting('server.https.certKey', ''),
                 serverState    : '',
-                serverAutostart: getSetting('server.autostart', false),
+                serverAutostart: getSetting('server.autostart', true),
+                extras         : false,
 
                 availablePrinters: [],
+                paperFormats     : [
+                    'A4',
+                    '43*25 мм',
+                    '40*30 мм',
+                    '100*148 мм',
+                ],
+                paperFormat      : 'A4',
                 printer          : null,
-                urlToPrint       : 'https://vast.ru',
                 printResult      : '',
             };
         },
@@ -121,15 +129,6 @@
             serverPort(port) {
                 settings.setSync('server.port', port);
             },
-            serverHttps(useHttps) {
-                settings.setSync('server.https.enabled', useHttps);
-            },
-            httpsCert(cert) {
-                settings.setSync('server.https.cert', cert);
-            },
-            httpsCertKey(key) {
-                settings.setSync('server.https.certKey', key);
-            },
             serverAutostart(autostart) {
                 settings.setSync('server.autostart', autostart);
             },
@@ -146,28 +145,23 @@
             updateNetworkInterfaces() {
                 const interfaces = ipcRenderer.sendSync('get-network-interfaces');
                 this.availableIps = flatten(Object.values(interfaces))
-                    .filter(addr => addr.family === "IPv4" && !addr.internal)
+                    .filter(addr => addr.family === "IPv4")
                     .map(addr => addr.address)
-                    .concat('localhost');
+                    .map(addr => addr === '127.0.0.1' ? 'localhost' : addr);
             },
             updateServerState() {
                 ipcRenderer.send('get-server-state');
             },
             print() {
-                ipcRenderer.send('print', { printer: this.printer, url: this.urlToPrint });
-                ipcRenderer.once('print-result', (e, { success, error }) => {
-                    this.printResult = success ? 'ok' : 'fail: ' + JSON.stringify(error);
-                });
+                  ipcRenderer.send('test-print', { printer: this.printer, paperFormat: this.paperFormat });
+                  ipcRenderer.once('test-print-result', (e, { success, error }) => {
+                      this.printResult = success ? 'ok' : 'fail: ' + JSON.stringify(error);
+                  });
             },
             startServer() {
                 ipcRenderer.send('start-server', {
-                    port        : this.serverPort,
-                    hostname    : this.serverIp,
-                    httpsSettings: {
-                        useHttps    : this.serverHttps,
-                        httpsCert   : this.httpsCert,
-                        httpsCertKey: this.httpsCertKey,
-                    },
+                    port     : this.serverPort,
+                    hostname : this.serverIp,
                 });
             },
             stopServer() {
