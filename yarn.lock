@@ -9882,25 +9882,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^5.3.0, semver@npm:^5.5.0":
-  version: 5.6.0
-  resolution: "semver@npm:5.6.0"
+"semver@npm:^5.3.0, semver@npm:^5.5.0, semver@npm:^5.6.0":
+  version: 5.7.2
+  resolution: "semver@npm:5.7.2"
   bin:
-    semver: ./bin/semver
-  checksum: 15409e2282f496e240cb2c3355f60e46b09df3820ed6cad359ae6d90e5395b5b75f38a46f91f478473ed65c8d1b086842cf1f7f1f6d26303003759ab8458e752
+    semver: bin/semver
+  checksum: fb4ab5e0dd1c22ce0c937ea390b4a822147a9c53dbd2a9a0132f12fe382902beef4fbf12cf51bb955248d8d15874ce8cd89532569756384f994309825f10b686
   languageName: node
   linkType: hard
 
-"semver@npm:^5.6.0":
-  version: 5.7.0
-  resolution: "semver@npm:5.7.0"
-  bin:
-    semver: ./bin/semver
-  checksum: 25d150834511d12ae0c1a0f012f294cb176b1497534c51c5ebb6209b7e8ab3845c6df4f1c078921487e6bcfcf0abd56ffdcabf38ef26d4e1bd93fdca0762cae4
-  languageName: node
-  linkType: hard
-
-"semver@npm:^6.0.0, semver@npm:^6.1.2, semver@npm:^6.2.0, semver@npm:^6.3.0":
+"semver@npm:^6.0.0, semver@npm:^6.1.1, semver@npm:^6.1.2, semver@npm:^6.2.0, semver@npm:^6.3.0":
   version: 6.3.0
   resolution: "semver@npm:6.3.0"
   bin:
@@ -9909,16 +9900,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^6.1.1":
-  version: 6.2.0
-  resolution: "semver@npm:6.2.0"
-  bin:
-    semver: ./bin/semver.js
-  checksum: 970d901d89c3467bf1ed3765a7a967a49627f7f506a9d89f00b2befaf8b7821f940adaa27ac8f6a522c28215b68c4c7ba159cdad1ab58261969f9e01e734c882
-  languageName: node
-  linkType: hard
-
-"semver@npm:^7.1.3, semver@npm:^7.3.8":
+"semver@npm:^7.1.3, semver@npm:^7.3.2, semver@npm:^7.3.5, semver@npm:^7.3.8":
   version: 7.3.8
   resolution: "semver@npm:7.3.8"
   dependencies:
@@ -9926,28 +9908,6 @@ __metadata:
   bin:
     semver: bin/semver.js
   checksum: ba9c7cbbf2b7884696523450a61fee1a09930d888b7a8d7579025ad93d459b2d1949ee5bbfeb188b2be5f4ac163544c5e98491ad6152df34154feebc2cc337c1
-  languageName: node
-  linkType: hard
-
-"semver@npm:^7.3.2":
-  version: 7.3.4
-  resolution: "semver@npm:7.3.4"
-  dependencies:
-    lru-cache: ^6.0.0
-  bin:
-    semver: bin/semver.js
-  checksum: 96451bfd7cba9b60ee87571959dc47e87c95b2fe58a9312a926340fee9907fc7bc062c352efdaf5bb24b2dff59c145e14faf7eb9d718a84b4751312531b39f43
-  languageName: node
-  linkType: hard
-
-"semver@npm:^7.3.5":
-  version: 7.3.7
-  resolution: "semver@npm:7.3.7"
-  dependencies:
-    lru-cache: ^6.0.0
-  bin:
-    semver: bin/semver.js
-  checksum: 2fa3e877568cd6ce769c75c211beaed1f9fce80b28338cadd9d0b6c40f2e2862bafd62c19a6cff42f3d54292b7c623277bcab8816a2b5521cf15210d43e75232
   languageName: node
   linkType: hard
 
