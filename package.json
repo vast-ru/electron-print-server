@@ -30,7 +30,7 @@
     "electron-settings": "^4.0.0",
     "electron-webpack": "2.8.2",
     "electron-webpack-vue": "2.3.0",
-    "express": "4.17.3",
+    "express": "4.20.0",
     "flow-bin": "^0.86.0",
     "lodash": "4.17.21",
     "tmp": "0.1.0",
