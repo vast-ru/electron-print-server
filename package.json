@@ -34,7 +34,7 @@
     "flow-bin": "^0.86.0",
     "lodash": "4.17.21",
     "tmp": "0.1.0",
-    "vue": "2.6.10",
+    "vue": "3.0.0",
     "vue-template-compiler": "2.6.10",
     "webpack": "4.35.2",
     "webpack-build-notifier": "2.3.0"
