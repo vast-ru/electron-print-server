@@ -2825,14 +2825,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:~0.28.0":
-  version: 0.28.1
-  resolution: "axios@npm:0.28.1"
+"axios@npm:~1.8.2":
+  version: 1.8.2
+  resolution: "axios@npm:1.8.2"
   dependencies:
-    follow-redirects: ^1.15.0
+    follow-redirects: ^1.15.6
     form-data: ^4.0.0
     proxy-from-env: ^1.1.0
-  checksum: 5115a38d79064d07437c5a28f15841e3607634040e3120ec06a2c4367a7d07cf213b16496eab53b6f58ebc5fb377a440ba9ed4782529b14449a1e285734bfb54
+  checksum: c47a43b79a058aa9e53a65bec9ade35c9f6e76a3999c795a79a2d205fb5f803fd4245497a0209a9727cbbe4f558791dd852ad2c168c5fc030259c11598ed8fd7
   languageName: node
   linkType: hard
 
@@ -4875,7 +4875,7 @@ __metadata:
   dependencies:
     "@electron/remote": ^2.0.1
     "@types/express": 4.17.0
-    axios: ~0.28.0
+    axios: ~1.8.2
     babel-preset-flow: ^6.23.0
     body-parser: 1.20.3
     content-type: ~1.0.4
@@ -5680,7 +5680,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.15.0":
+"follow-redirects@npm:^1.15.6":
   version: 1.15.9
   resolution: "follow-redirects@npm:1.15.9"
   peerDependenciesMeta:
@@ -5820,7 +5820,6 @@ __metadata:
   dependencies:
     bindings: ^1.5.0
     nan: ^2.12.1
-  checksum: 2587e64097c1251ae549440b6347954ef3c5ce390061f9e0f0810e83d5d604bb7222c382e7e3c39fc2ba4da53f115b118ea5359ca3bb0bcb96576596bc685d5a
   conditions: os=darwin
   languageName: node
   linkType: hard
