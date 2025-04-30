@@ -1,4 +1,13 @@
 # electron-print-server
+
+### ⚠️ Deprecated ⚠️
+
+Project is archived and will not recieve any updates.  
+Use one of the [forks](https://github.com/vast-ru/electron-print-server/forks?include=active%2Carchived%2Cinactive%2Cnetwork&page=1&period=&sort_by=stargazer_counts) (or make your own),
+or consider migrating to [Go Print Server](https://github.com/downace/go-print-server)
+
+----
+
 A simple HTTP printing server.
 Accepts commands via HTTP (or HTTPS) and prints documents that are loaded from provided URLs.
 
